@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('workflow_step_approver_defs', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('workflow_step_id')->constrained()->cascadeOnDelete();
+            $table->string('approver_type');
+            $table->foreignId('role_id')->nullable()->constrained('roles')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
     }

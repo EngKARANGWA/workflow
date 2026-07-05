@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\WorkflowException;
 use App\Http\Middleware\EnsureUserHasSystemRole;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -35,6 +36,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (AuthenticationException $e, $request) {
             if ($request->is('api/*')) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+        });
+
+        $exceptions->render(function (WorkflowException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => $e->getMessage()], $e->status);
             }
         });
     })->create();

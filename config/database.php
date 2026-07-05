@@ -100,10 +100,8 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
-            // The bundled libpq on this host is old enough to mishandle native (extended-protocol)
-            // prepared statements against Neon's pooler under multi-statement transactions
-            // (a CREATE TABLE would silently corrupt the transaction before the next ALTER TABLE
-            // ran). Emulated prepares fall back to the simple query protocol, which avoids it.
+            // Required for Neon's pooled endpoint - see App\Database\NeonPostgresConnection
+            // for the full explanation and the matching boolean-binding fix it pairs with.
             'options' => [PDO::ATTR_EMULATE_PREPARES => true],
         ],
 

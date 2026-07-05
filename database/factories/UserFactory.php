@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\SystemRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -30,6 +31,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'system_role' => SystemRole::Requester,
         ];
     }
 
@@ -41,5 +43,15 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => ['system_role' => SystemRole::Admin]);
+    }
+
+    public function approver(): static
+    {
+        return $this->state(fn () => ['system_role' => SystemRole::Approver]);
     }
 }
