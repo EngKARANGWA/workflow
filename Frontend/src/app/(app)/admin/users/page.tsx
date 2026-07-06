@@ -1,0 +1,285 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { roles as rolesApi, users as usersApi } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import type { BusinessRole, SystemRole, User } from "@/lib/types";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
+import { IconUserPlus, IconUsers } from "@/components/icons";
+import { initials } from "@/lib/initials";
+import {
+  btnGhost,
+  btnPrimary,
+  card,
+  errorText,
+  input,
+  label,
+  mutedText,
+  tableDivide,
+  tableHead,
+  tableHeadCell,
+  tableWrap,
+} from "@/lib/ui";
+
+const SYSTEM_ROLES: SystemRole[] = ["requester", "approver", "system_administrator"];
+
+export default function UsersPage() {
+  const [items, setItems] = useState<User[]>([]);
+  const [businessRoles, setBusinessRoles] = useState<BusinessRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+
+  function load() {
+    setLoading(true);
+    Promise.all([usersApi.list({ per_page: 100 }), rolesApi.list()])
+      .then(([userRes, roleRes]) => {
+        setItems(userRes.data);
+        setBusinessRoles(roleRes);
+      })
+      .catch((err) => setError(formatError(err)))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(load, []);
+
+  async function handleDelete(id: number) {
+    if (!confirm("Delete this user?")) return;
+    setError(null);
+    try {
+      await usersApi.remove(id);
+      load();
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Users"
+        description="Manage accounts, system roles, and business-role assignments."
+        action={
+          <button
+            type="button"
+            onClick={() => setShowForm((v) => !v)}
+            className={`flex items-center gap-1.5 ${btnPrimary}`}
+          >
+            {showForm ? (
+              "Cancel"
+            ) : (
+              <>
+                <IconUserPlus className="h-4 w-4" /> New user
+              </>
+            )}
+          </button>
+        }
+      />
+
+      {showForm && (
+        <CreateUserForm
+          businessRoles={businessRoles}
+          onCreated={() => {
+            setShowForm(false);
+            load();
+          }}
+        />
+      )}
+
+      {error && <p className={errorText}>{error}</p>}
+      {loading && <p className={mutedText}>Loading...</p>}
+
+      {!loading && items.length === 0 && (
+        <EmptyState icon={<IconUsers />} title="No users yet" description="Create the first one above." />
+      )}
+
+      {!loading && items.length > 0 && (
+        <div className={tableWrap}>
+          <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-neutral-800">
+            <thead className={tableHead}>
+              <tr>
+                <th className={tableHeadCell}>Name</th>
+                <th className={tableHeadCell}>Email</th>
+                <th className={tableHeadCell}>System role</th>
+                <th className={tableHeadCell}>Business roles</th>
+                <th className={tableHeadCell} />
+              </tr>
+            </thead>
+            <tbody className={tableDivide}>
+              {items.map((u) => (
+                <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/50">
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-neutral-700 dark:text-neutral-200">
+                        {initials(u.name)}
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-neutral-100">{u.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600 dark:text-neutral-300">{u.email}</td>
+                  <td className="px-4 py-2.5">
+                    <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium capitalize text-gray-700 dark:bg-neutral-800 dark:text-neutral-300">
+                      {u.system_role.replace(/_/g, " ")}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-600 dark:text-neutral-300">
+                    {u.roles?.map((r) => r.name).join(", ") || "-"}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button type="button" onClick={() => handleDelete(u.id)} className={btnGhost}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CreateUserForm({
+  businessRoles,
+  onCreated,
+}: {
+  businessRoles: BusinessRole[];
+  onCreated: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [systemRole, setSystemRole] = useState<SystemRole>("requester");
+  const [department, setDepartment] = useState("");
+  const [employeeLevel, setEmployeeLevel] = useState("");
+  const [country, setCountry] = useState("");
+  const [roleIds, setRoleIds] = useState<number[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  function toggleRole(id: number) {
+    setRoleIds((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      await usersApi.create({
+        name,
+        email,
+        password,
+        system_role: systemRole,
+        department: department || undefined,
+        employee_level: employeeLevel || undefined,
+        country: country || undefined,
+        role_ids: roleIds,
+      });
+      onCreated();
+    } catch (err) {
+      setError(formatError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className={`max-w-lg space-y-4 ${card} p-5`}>
+      <div className="grid grid-cols-2 gap-3">
+        <TextInput id="new-user-name" label="Name" value={name} onChange={setName} required />
+        <TextInput id="new-user-email" label="Email" type="email" value={email} onChange={setEmail} required />
+        <TextInput
+          id="new-user-password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          required
+        />
+        <div>
+          <label className={label} htmlFor="new-user-system-role">
+            System role
+          </label>
+          <select
+            id="new-user-system-role"
+            value={systemRole}
+            onChange={(e) => setSystemRole(e.target.value as SystemRole)}
+            className={`w-full ${input}`}
+          >
+            {SYSTEM_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
+        <TextInput id="new-user-department" label="Department" value={department} onChange={setDepartment} />
+        <TextInput
+          id="new-user-employee-level"
+          label="Employee level"
+          value={employeeLevel}
+          onChange={setEmployeeLevel}
+        />
+        <TextInput id="new-user-country" label="Country" value={country} onChange={setCountry} />
+      </div>
+
+      {businessRoles.length > 0 && (
+        <div>
+          <label className={label}>Business roles (for step routing)</label>
+          <div className="flex flex-wrap gap-3">
+            {businessRoles.map((r) => (
+              <label
+                key={r.id}
+                className="flex items-center gap-1.5 text-sm text-gray-700 dark:text-neutral-300"
+              >
+                <input type="checkbox" checked={roleIds.includes(r.id)} onChange={() => toggleRole(r.id)} />
+                {r.name}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {error && <p className={errorText}>{error}</p>}
+
+      <button type="submit" disabled={submitting} className={btnPrimary}>
+        {submitting ? "Creating..." : "Create user"}
+      </button>
+    </form>
+  );
+}
+
+function TextInput({
+  id,
+  label: labelText,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <label className={label} htmlFor={id}>
+        {labelText}
+      </label>
+      <input
+        id={id}
+        type={type}
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full ${input}`}
+      />
+    </div>
+  );
+}

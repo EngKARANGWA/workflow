@@ -36,7 +36,7 @@ class RequestEngine
     public function submit(Workflow $workflow, User $requester, string $title, array $data): WorkflowRequest
     {
         return DB::transaction(function () use ($workflow, $requester, $title, $data) {
-            $version = $workflow->currentVersion();
+            $version = $workflow->currentVersion;
 
             if (! $version) {
                 throw new WorkflowException('This workflow has no published version to submit against.');

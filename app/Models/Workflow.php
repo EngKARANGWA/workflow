@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Workflow extends Model
 {
@@ -32,8 +33,8 @@ class Workflow extends Model
         return $this->hasMany(WorkflowVersion::class);
     }
 
-    public function currentVersion(): ?WorkflowVersion
+    public function currentVersion(): HasOne
     {
-        return $this->versions()->where('is_current', true)->first();
+        return $this->hasOne(WorkflowVersion::class)->where('is_current', true);
     }
 }
