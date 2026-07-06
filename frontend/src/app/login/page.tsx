@@ -75,7 +75,7 @@ export default function LoginPage() {
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 pb-10 sm:px-12 lg:mx-0 lg:flex-none lg:px-0 lg:pr-16 xl:pr-24">
         <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-xl">
           <h2 className="text-xl font-semibold text-white">Sign in</h2>
-          <p className="mt-1 text-sm text-white/50">Welcome back — enter your details below.</p>
+          <p className="mt-1 text-sm text-white/50">Welcome back - enter your details below.</p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
