@@ -22,7 +22,7 @@ A configurable, data-driven approval engine built with Laravel 12 / PHP 8.2 and 
 ### Steps
 
 ```bash
-cd workflow-engine
+cd workflow
 composer install
 cp .env.example .env
 php artisan key:generate
@@ -90,6 +90,10 @@ This repo ships a `Dockerfile` for deploying to [Render](https://render.com) (or
    | `DB_NEON_ENDPOINT` | only if on a Neon pooled endpoint with an older client — see the Trade-offs section |
 
 3. Deploy. `scripts/00-laravel-deploy.sh` runs automatically on every deploy: `composer install`, config/route caching, `migrate --force`, and an idempotent `db:seed` (safe to re-run — it uses `firstOrCreate`, so it won't duplicate the admin account or roles on subsequent deploys).
+
+### Frontend (optional, not part of the brief)
+
+`Frontend/` is a Next.js UI built on top of this API — not requested by the challenge, but included as a working demonstration of the engine end-to-end (auth, workflow/user/role admin, request submission and approval, delegations, notifications). See [`Frontend/README.md`](Frontend/README.md) for setup; it just needs `NEXT_PUBLIC_API_URL` pointed at this backend.
 
 ## Assumptions made
 

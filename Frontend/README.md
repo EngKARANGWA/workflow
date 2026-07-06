@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Workflow Engine — Frontend
 
-## Getting Started
+A Next.js UI for the [Workflow & Approval Engine API](../README.md) — not part of the challenge brief, but included as a working demonstration of the engine end-to-end: auth, admin (users/roles/workflows), request submission and approval, delegations, and notifications.
 
-First, run the development server:
+## Setup
 
 ```bash
+cd Frontend
+npm install
+cp .env.local.example .env.local   # or create it manually, see below
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local` needs one variable, pointing at the backend API:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The backend (see the [root README](../README.md)) must be running first — this app only talks to it over HTTP, it has no database access of its own.
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000). Log in with the seeded admin (`admin@workflow.test` / `password`) or register a new Requester account.
 
-To learn more about Next.js, take a look at the following resources:
+## Notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Built with the Next.js App Router, TypeScript, and Tailwind CSS.
+- No component library or icon package — UI primitives and icons are hand-rolled in `src/components/`.
+- Dark/light theme follows the OS preference automatically; the sidebar is intentionally always dark.
