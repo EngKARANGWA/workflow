@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { requests as requestsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
@@ -29,7 +30,9 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
       setRequest(req);
       setHistory(hist);
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -182,9 +185,14 @@ function DecideForm({ requestId, onDecided }: { requestId: number; onDecided: ()
     try {
       await requestsApi.decide(requestId, { decision, comments: comments || undefined });
       setComments("");
+      if (decision === "approved") toast.success("Request approved");
+      else if (decision === "rejected") toast.error("Request rejected");
+      else toast.warning("Request returned to requester");
       onDecided();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -263,9 +271,12 @@ function ResubmitForm({
     setSubmitting(true);
     try {
       await requestsApi.resubmit(requestId, { data });
+      toast.success("Request resubmitted");
       onResubmitted();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

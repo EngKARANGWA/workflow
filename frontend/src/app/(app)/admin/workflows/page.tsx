@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { workflows as workflowsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { Workflow } from "@/lib/types";
@@ -19,7 +20,11 @@ export default function WorkflowsPage() {
     workflowsApi
       .list({ per_page: 100 })
       .then((res) => setItems(res.data))
-      .catch((err) => setError(formatError(err)))
+      .catch((err) => {
+        const message = formatError(err);
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   }, []);
 

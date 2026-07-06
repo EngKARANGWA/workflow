@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { roles as rolesApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { BusinessRole } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconTag } from "@/components/icons";
 import { btnPrimary, card, errorText, input, mutedText, tableDivide, tableWrap } from "@/lib/ui";
 
@@ -16,13 +18,19 @@ export default function RolesPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<BusinessRole | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function load() {
     setLoading(true);
     rolesApi
       .list()
       .then(setItems)
-      .catch((err) => setError(formatError(err)))
+      .catch((err) => {
+        const message = formatError(err);
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -34,24 +42,34 @@ export default function RolesPage() {
     setSubmitting(true);
     try {
       await rolesApi.create({ name, description: description || undefined });
+      toast.success("Business role created");
       setName("");
       setDescription("");
       load();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this role?")) return;
+  async function confirmDelete() {
+    if (!pendingDelete) return;
     setError(null);
+    setDeleting(true);
     try {
-      await rolesApi.remove(id);
+      await rolesApi.remove(pendingDelete.id);
+      toast.success("Business role deleted");
+      setPendingDelete(null);
       load();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -109,7 +127,7 @@ export default function RolesPage() {
               </div>
               <button
                 type="button"
-                onClick={() => handleDelete(r.id)}
+                onClick={() => setPendingDelete(r)}
                 className="shrink-0 text-gray-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
               >
                 Delete
@@ -118,6 +136,16 @@ export default function RolesPage() {
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={`Delete ${pendingDelete?.name ?? "this role"}?`}
+        description="Any workflow steps that route to this role will lose that approver assignment."
+        confirmLabel="Delete"
+        submitting={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

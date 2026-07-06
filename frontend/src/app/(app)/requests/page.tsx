@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { requests as requestsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
@@ -56,7 +57,11 @@ export default function RequestsPage() {
         if (!cancelled) setItems(res.data);
       })
       .catch((err) => {
-        if (!cancelled) setError(formatError(err));
+        if (!cancelled) {
+          const message = formatError(err);
+          setError(message);
+          toast.error(message);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { delegations as delegationsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { Delegation } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconUsers } from "@/components/icons";
 import { btnGhost, btnPrimary, card, errorText, input, label, mutedText } from "@/lib/ui";
 
@@ -39,13 +41,19 @@ export default function DelegationsPage() {
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pendingRevoke, setPendingRevoke] = useState<Delegation | null>(null);
+  const [revoking, setRevoking] = useState(false);
 
   function load() {
     setLoading(true);
     delegationsApi
       .list()
       .then(setItems)
-      .catch((err) => setError(formatError(err)))
+      .catch((err) => {
+        const message = formatError(err);
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -61,25 +69,35 @@ export default function DelegationsPage() {
         starts_at: new Date(startsAt).toISOString(),
         ends_at: new Date(endsAt).toISOString(),
       });
+      toast.success("Delegation created");
       setDelegateId("");
       setStartsAt("");
       setEndsAt("");
       load();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleRevoke(id: number) {
-    if (!confirm("Revoke this delegation?")) return;
+  async function confirmRevoke() {
+    if (!pendingRevoke) return;
     setError(null);
+    setRevoking(true);
     try {
-      await delegationsApi.remove(id);
+      await delegationsApi.remove(pendingRevoke.id);
+      toast.success("Delegation revoked");
+      setPendingRevoke(null);
       load();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setRevoking(false);
     }
   }
 
@@ -162,7 +180,7 @@ export default function DelegationsPage() {
                   </div>
                 </div>
                 {(d.delegator_id === user?.id || user?.system_role === "system_administrator") && (
-                  <button type="button" onClick={() => handleRevoke(d.id)} className={`shrink-0 ${btnGhost}`}>
+                  <button type="button" onClick={() => setPendingRevoke(d)} className={`shrink-0 ${btnGhost}`}>
                     Revoke
                   </button>
                 )}
@@ -171,6 +189,22 @@ export default function DelegationsPage() {
           })}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={pendingRevoke !== null}
+        title="Revoke this delegation?"
+        description={
+          pendingRevoke
+            ? `${pendingRevoke.delegator?.name ?? `#${pendingRevoke.delegator_id}`} → ${
+                pendingRevoke.delegate?.name ?? `#${pendingRevoke.delegate_id}`
+              } will stop routing approvals immediately.`
+            : undefined
+        }
+        confirmLabel="Revoke"
+        submitting={revoking}
+        onConfirm={confirmRevoke}
+        onCancel={() => setPendingRevoke(null)}
+      />
     </div>
   );
 }

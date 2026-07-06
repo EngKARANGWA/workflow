@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { requests as requestsApi, workflows as workflowsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { Workflow } from "@/lib/types";
@@ -24,7 +25,11 @@ export default function NewRequestPage() {
     workflowsApi
       .list({ is_active: true, per_page: 100 })
       .then((res) => setWorkflowList(res.data))
-      .catch((err) => setError(formatError(err)))
+      .catch((err) => {
+        const message = formatError(err);
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -55,6 +60,7 @@ export default function NewRequestPage() {
 
     if (workflowId === "") {
       setError("Choose a workflow.");
+      toast.warning("Choose a workflow before submitting.");
       return;
     }
 
@@ -66,9 +72,12 @@ export default function NewRequestPage() {
     setSubmitting(true);
     try {
       const created = await requestsApi.create({ workflow_id: Number(workflowId), title, data });
+      toast.success("Request submitted");
       router.push(`/requests/${created.id}`);
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { roles as rolesApi, workflows as workflowsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { BusinessRole, WorkflowStepInput } from "@/lib/types";
@@ -30,7 +31,11 @@ export default function NewWorkflowPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    rolesApi.list().then(setBusinessRoles).catch((err) => setError(formatError(err)));
+    rolesApi.list().then(setBusinessRoles).catch((err) => {
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
+    });
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -43,9 +48,12 @@ export default function NewWorkflowPage() {
         description: description || undefined,
         steps: coerceConditionValues(steps),
       });
+      toast.success("Workflow created");
       router.push(`/admin/workflows/${created.id}`);
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

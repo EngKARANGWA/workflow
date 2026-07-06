@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { formatError } from "@/lib/format-error";
 import { btnPrimary, card, errorText, input, label, mutedText } from "@/lib/ui";
@@ -32,9 +33,12 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register(form);
+      toast.success("Account created successfully");
       router.push("/requests");
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

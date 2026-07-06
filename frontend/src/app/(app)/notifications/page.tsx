@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { notifications as notificationsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { AppNotification } from "@/lib/types";
@@ -20,7 +21,11 @@ export default function NotificationsPage() {
     notificationsApi
       .list({ per_page: 50 })
       .then((res) => setItems(res.data))
-      .catch((err) => setError(formatError(err)))
+      .catch((err) => {
+        const message = formatError(err);
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -32,7 +37,9 @@ export default function NotificationsPage() {
       await notificationsApi.markRead(id);
       setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)));
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     }
   }
 
@@ -45,8 +52,11 @@ export default function NotificationsPage() {
       await Promise.all(unread.map((n) => notificationsApi.markRead(n.id)));
       const now = new Date().toISOString();
       setItems((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: now })));
+      toast.success("All notifications marked as read");
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setMarkingAll(false);
     }

@@ -2,10 +2,12 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { roles as rolesApi, workflows as workflowsApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { BusinessRole, Workflow, WorkflowStepInput } from "@/lib/types";
 import { WorkflowStepBuilder, emptyStep } from "@/components/WorkflowStepBuilder";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { btnPrimary, card, errorText, mutedText } from "@/lib/ui";
 
 function coerceConditionValues(steps: WorkflowStepInput[]): WorkflowStepInput[] {
@@ -33,6 +35,8 @@ export default function WorkflowDetailPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showVersionForm, setShowVersionForm] = useState(false);
+  const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
+  const [togglingActive, setTogglingActive] = useState(false);
 
   function load() {
     setLoading(true);
@@ -41,7 +45,11 @@ export default function WorkflowDetailPage({ params }: { params: Promise<{ id: s
         setWorkflow(w);
         setBusinessRoles(r);
       })
-      .catch((err) => setError(formatError(err)))
+      .catch((err) => {
+        const message = formatError(err);
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -49,12 +57,28 @@ export default function WorkflowDetailPage({ params }: { params: Promise<{ id: s
 
   async function toggleActive() {
     if (!workflow) return;
+    if (workflow.is_active) {
+      setConfirmingDeactivate(true);
+      return;
+    }
+    await applyToggle();
+  }
+
+  async function applyToggle() {
+    if (!workflow) return;
     setError(null);
+    setTogglingActive(true);
     try {
       const updated = await workflowsApi.update(workflow.id, { is_active: !workflow.is_active });
       setWorkflow((w) => (w ? { ...w, is_active: updated.is_active } : w));
+      toast.success(updated.is_active ? "Workflow activated" : "Workflow deactivated");
+      setConfirmingDeactivate(false);
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setTogglingActive(false);
     }
   }
 
@@ -157,6 +181,16 @@ export default function WorkflowDetailPage({ params }: { params: Promise<{ id: s
           </div>
         ))}
       </section>
+
+      <ConfirmDialog
+        open={confirmingDeactivate}
+        title={`Deactivate "${workflow.name}"?`}
+        description="New requests won't be able to use this workflow until it's reactivated. Requests already in progress are unaffected."
+        confirmLabel="Deactivate"
+        submitting={togglingActive}
+        onConfirm={applyToggle}
+        onCancel={() => setConfirmingDeactivate(false)}
+      />
     </div>
   );
 }
@@ -180,9 +214,12 @@ function NewVersionForm({
     setSubmitting(true);
     try {
       await workflowsApi.addVersion(workflowId, { steps: coerceConditionValues(steps) });
+      toast.success("New workflow version published");
       onPublished();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

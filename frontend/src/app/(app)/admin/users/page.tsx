@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { roles as rolesApi, users as usersApi } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import type { BusinessRole, SystemRole, User } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconUserPlus, IconUsers } from "@/components/icons";
 import { initials } from "@/lib/initials";
 import {
@@ -30,6 +32,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function load() {
     setLoading(true);
@@ -38,20 +42,31 @@ export default function UsersPage() {
         setItems(userRes.data);
         setBusinessRoles(roleRes);
       })
-      .catch((err) => setError(formatError(err)))
+      .catch((err) => {
+        const message = formatError(err);
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   }
 
   useEffect(load, []);
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this user?")) return;
+  async function confirmDelete() {
+    if (!pendingDelete) return;
     setError(null);
+    setDeleting(true);
     try {
-      await usersApi.remove(id);
+      await usersApi.remove(pendingDelete.id);
+      toast.success("User deleted");
+      setPendingDelete(null);
       load();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -127,7 +142,7 @@ export default function UsersPage() {
                     {u.roles?.map((r) => r.name).join(", ") || "-"}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <button type="button" onClick={() => handleDelete(u.id)} className={btnGhost}>
+                    <button type="button" onClick={() => setPendingDelete(u)} className={btnGhost}>
                       Delete
                     </button>
                   </td>
@@ -137,6 +152,16 @@ export default function UsersPage() {
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={`Delete ${pendingDelete?.name ?? "this user"}?`}
+        description="This permanently removes the account and cannot be undone."
+        confirmLabel="Delete"
+        submitting={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }
@@ -178,9 +203,12 @@ function CreateUserForm({
         country: country || undefined,
         role_ids: roleIds,
       });
+      toast.success("User created");
       onCreated();
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

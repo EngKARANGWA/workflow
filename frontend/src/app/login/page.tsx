@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { formatError } from "@/lib/format-error";
 
@@ -26,9 +27,12 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
+      toast.success("Signed in successfully");
       router.push("/requests");
     } catch (err) {
-      setError(formatError(err));
+      const message = formatError(err);
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
