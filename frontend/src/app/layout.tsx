@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   description: "Dynamic workflow & approval engine",
 };
 
+// Every route here is client-rendered behind auth (localStorage token) and gets
+// nothing from static generation. Forcing dynamic rendering app-wide also sidesteps
+// a Vercel build-output bug ("Unable to find lambda for route") that occurs when
+// static and dynamic app-router pages share a route group's lambda mapping.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
