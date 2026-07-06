@@ -12,6 +12,8 @@ info:
     url: https://github.com/EngKARANGWA/workflow
 
 servers:
+  - url: https://workflow-vi00.onrender.com/api
+    description: Deployed (Render)
   - url: http://127.0.0.1:8000/api
     description: Local development (php artisan serve default port)
   - url: http://127.0.0.1:8123/api
