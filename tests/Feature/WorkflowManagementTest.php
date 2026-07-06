@@ -67,7 +67,7 @@ class WorkflowManagementTest extends TestCase
 
         $this->assertSame($originalVersionId, $request->workflow_version_id);
         $this->assertSame(2, $workflow->fresh()->versions()->count());
-        $this->assertSame(2, $workflow->fresh()->currentVersion()->version_number);
+        $this->assertSame(2, $workflow->fresh()->currentVersion->version_number);
         $this->assertSame($roleV1->id, $request->steps->first()->workflowStep->approverDefs->first()->role_id);
     }
 }
