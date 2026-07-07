@@ -14,6 +14,7 @@ const PAGES: Page[] = [
   { label: "Workflows", href: "/admin/workflows", adminOnly: true },
   { label: "Users", href: "/admin/users", adminOnly: true },
   { label: "Roles", href: "/admin/roles", adminOnly: true },
+  { label: "Reports", href: "/admin/reports", adminOnly: true },
 ];
 
 export function QuickSearch({ isAdmin, isApproverOrAdmin }: { isAdmin: boolean; isApproverOrAdmin: boolean }) {

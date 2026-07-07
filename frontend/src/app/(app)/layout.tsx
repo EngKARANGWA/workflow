@@ -9,6 +9,7 @@ import { Dropdown, DropdownButton } from "@/components/Dropdown";
 import { QuickSearch } from "@/components/QuickSearch";
 import {
   IconBell,
+  IconChartBar,
   IconChevronDown,
   IconDocument,
   IconMenu,
@@ -90,6 +91,9 @@ function SidebarContent({
             </SidebarLink>
             <SidebarLink href="/admin/roles" icon={<IconTag className="h-4.5 w-4.5" />} onNavigate={onNavigate}>
               Roles
+            </SidebarLink>
+            <SidebarLink href="/admin/reports" icon={<IconChartBar className="h-4.5 w-4.5" />} onNavigate={onNavigate}>
+              Reports
             </SidebarLink>
           </>
         )}

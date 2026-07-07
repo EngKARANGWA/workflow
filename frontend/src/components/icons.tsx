@@ -2,6 +2,14 @@ type IconProps = { className?: string };
 
 const base = "h-5 w-5";
 
+export function IconChartBar({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M8 17V11m5 6V7m5 10v-4" />
+    </svg>
+  );
+}
+
 export function IconAlertTriangle({ className = base }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className={className}>
