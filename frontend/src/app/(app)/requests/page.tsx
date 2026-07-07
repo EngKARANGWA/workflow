@@ -75,16 +75,18 @@ export default function RequestsPage() {
     let cancelled = false;
 
     async function loadStats() {
-      const mine = await requestsApi.list({ scope: "mine", per_page: 100 });
+      const [mine, pending] = await Promise.all([
+        requestsApi.list({ scope: "mine", per_page: 100 }),
+        isApproverOrAdmin
+          ? requestsApi.list({ scope: "pending_my_approval", per_page: 100 })
+          : Promise.resolve(null),
+      ]);
       const byStatus = (status: string) => mine.data.filter((r) => r.status === status);
 
-      let pendingApproval = 0;
-      let pendingApprovalTrend: number[] = new Array(TREND_DAYS).fill(0);
-      if (isApproverOrAdmin) {
-        const pending = await requestsApi.list({ scope: "pending_my_approval", per_page: 100 });
-        pendingApproval = pending.total;
-        pendingApprovalTrend = bucketByDay(pending.data.map((r) => r.created_at), TREND_DAYS).map((b) => b.count);
-      }
+      const pendingApproval = pending?.total ?? 0;
+      const pendingApprovalTrend = pending
+        ? bucketByDay(pending.data.map((r) => r.created_at), TREND_DAYS).map((b) => b.count)
+        : new Array(TREND_DAYS).fill(0);
 
       if (cancelled) return;
 
