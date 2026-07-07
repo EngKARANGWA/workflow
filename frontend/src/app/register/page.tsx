@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { formatError } from "@/lib/format-error";
+import { CountrySelect } from "@/components/CountrySelect";
 import { btnPrimary, card, errorText, input, label, mutedText } from "@/lib/ui";
 
 export default function RegisterPage() {
@@ -105,7 +106,12 @@ export default function RegisterPage() {
                 value={form.employee_level}
                 onChange={(v) => update("employee_level", v)}
               />
-              <Field id="country" label="Country" value={form.country} onChange={(v) => update("country", v)} />
+              <div>
+                <label className={label} htmlFor="country">
+                  Country
+                </label>
+                <CountrySelect id="country" value={form.country} onChange={(v) => update("country", v)} />
+              </div>
             </div>
           </div>
 

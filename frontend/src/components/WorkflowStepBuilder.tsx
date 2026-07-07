@@ -1,6 +1,7 @@
 "use client";
 
 import type { BusinessRole, WorkflowStepInput } from "@/lib/types";
+import { UserSelect } from "@/components/UserSelect";
 import { card, inputSm, label } from "@/lib/ui";
 
 const OPERATORS = [
@@ -143,12 +144,11 @@ export function WorkflowStepBuilder({
                       ))}
                     </select>
                   ) : (
-                    <input
-                      type="number"
-                      placeholder="user id"
-                      value={approver.user_id ?? ""}
-                      onChange={(e) => updateApprover(stepIndex, approverIndex, { user_id: Number(e.target.value) })}
-                      className={`flex-1 ${inputSm}`}
+                    <UserSelect
+                      value={approver.user_id ?? null}
+                      onChange={(id) => updateApprover(stepIndex, approverIndex, { user_id: id ?? undefined })}
+                      className="flex-1"
+                      size="sm"
                     />
                   )}
                   <button
@@ -185,6 +185,7 @@ export function WorkflowStepBuilder({
                     className={`w-1/4 ${inputSm}`}
                   />
                   <select
+                    aria-label="Operator"
                     value={condition.operator}
                     onChange={(e) =>
                       updateCondition(stepIndex, conditionIndex, {

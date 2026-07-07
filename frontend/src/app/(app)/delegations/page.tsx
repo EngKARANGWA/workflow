@@ -9,6 +9,7 @@ import type { Delegation } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { UserSelect } from "@/components/UserSelect";
 import { IconUsers } from "@/components/icons";
 import { btnGhost, btnPrimary, card, errorText, input, label, mutedText } from "@/lib/ui";
 
@@ -37,7 +38,7 @@ export default function DelegationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [delegateId, setDelegateId] = useState("");
+  const [delegateId, setDelegateId] = useState<number | null>(null);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -62,15 +63,21 @@ export default function DelegationsPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (delegateId === null) {
+      const message = "Choose a delegate.";
+      setError(message);
+      toast.warning(message);
+      return;
+    }
     setSubmitting(true);
     try {
       await delegationsApi.create({
-        delegate_id: Number(delegateId),
+        delegate_id: delegateId,
         starts_at: new Date(startsAt).toISOString(),
         ends_at: new Date(endsAt).toISOString(),
       });
       toast.success("Delegation created");
-      setDelegateId("");
+      setDelegateId(null);
       setStartsAt("");
       setEndsAt("");
       load();
@@ -111,14 +118,8 @@ export default function DelegationsPage() {
       <form onSubmit={handleCreate} className={`space-y-3 ${card} p-5`}>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={label}>Delegate user ID</label>
-            <input
-              type="number"
-              value={delegateId}
-              onChange={(e) => setDelegateId(e.target.value)}
-              required
-              className={`w-full ${input}`}
-            />
+            <label className={label}>Delegate</label>
+            <UserSelect value={delegateId} onChange={setDelegateId} excludeUserId={user?.id} />
           </div>
           <div>
             <label className={label}>Starts at</label>

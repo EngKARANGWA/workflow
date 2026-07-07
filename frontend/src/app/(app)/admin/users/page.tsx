@@ -8,12 +8,13 @@ import type { BusinessRole, SystemRole, User } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Modal } from "@/components/Modal";
+import { CountrySelect } from "@/components/CountrySelect";
 import { IconUserPlus, IconUsers } from "@/components/icons";
 import { initials } from "@/lib/initials";
 import {
   btnGhost,
   btnPrimary,
-  card,
   errorText,
   input,
   label,
@@ -78,21 +79,15 @@ export default function UsersPage() {
         action={
           <button
             type="button"
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => setShowForm(true)}
             className={`flex items-center gap-1.5 ${btnPrimary}`}
           >
-            {showForm ? (
-              "Cancel"
-            ) : (
-              <>
-                <IconUserPlus className="h-4 w-4" /> New user
-              </>
-            )}
+            <IconUserPlus className="h-4 w-4" /> New user
           </button>
         }
       />
 
-      {showForm && (
+      <Modal open={showForm} onClose={() => setShowForm(false)} title="New user" maxWidth="36rem">
         <CreateUserForm
           businessRoles={businessRoles}
           onCreated={() => {
@@ -100,7 +95,7 @@ export default function UsersPage() {
             load();
           }}
         />
-      )}
+      </Modal>
 
       {error && <p className={errorText}>{error}</p>}
       {loading && <p className={mutedText}>Loading...</p>}
@@ -215,7 +210,7 @@ function CreateUserForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`max-w-lg space-y-4 ${card} p-5`}>
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <TextInput id="new-user-name" label="Name" value={name} onChange={setName} required />
         <TextInput id="new-user-email" label="Email" type="email" value={email} onChange={setEmail} required />
@@ -251,7 +246,12 @@ function CreateUserForm({
           value={employeeLevel}
           onChange={setEmployeeLevel}
         />
-        <TextInput id="new-user-country" label="Country" value={country} onChange={setCountry} />
+        <div>
+          <label className={label} htmlFor="new-user-country">
+            Country
+          </label>
+          <CountrySelect id="new-user-country" value={country} onChange={setCountry} />
+        </div>
       </div>
 
       {businessRoles.length > 0 && (
